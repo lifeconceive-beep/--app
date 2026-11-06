@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>냉파 - 냉장고 파먹기</title>
+<style>
+  :root {
+    --green-900: #1f3d2b;
+    --green-700: #2f6b47;
+    --green-500: #4a9d6b;
+    --green-100: #e6f3ea;
+    --cream: #fbf8f1;
+    --ink: #22302a;
+    --muted: #6b7a72;
+    --line: #dfe8e2;
+    --warn: #c8791f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  header {
+    background: var(--green-900);
+    color: #fff;
+    padding: 28px 20px 24px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: 1px; }
+  header p { margin: 0; color: #cfe5d6; font-size: 15px; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+  section { margin-bottom: 28px; }
+  h2 { font-size: 18px; margin: 0 0 12px; color: var(--green-900); }
+  .hint { color: var(--muted); font-size: 13px; margin: -6px 0 12px; }
+
+  .add-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .add-row input {
+    flex: 1; padding: 12px 14px; font-size: 16px;
+    border: 1.5px solid var(--line); border-radius: 10px; background: #fff;
+  }
+  .add-row input:focus { outline: none; border-color: var(--green-500); }
+  button { font-family: inherit; cursor: pointer; }
+  .btn {
+    background: var(--green-700); color: #fff; border: none;
+    padding: 12px 18px; border-radius: 10px; font-size: 15px; font-weight: 600;
+  }
+  .btn:hover { background: var(--green-900); }
+  .btn.ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--line); font-weight: 500; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: 1.5px solid var(--line); background: #fff; color: var(--ink);
+    padding: 8px 14px; border-radius: 999px; font-size: 15px;
+  }
+  .chip:hover { border-color: var(--green-500); }
+  .chip.on { background: var(--green-700); border-color: var(--green-700); color: #fff; }
+
+  .selected-box {
+    background: var(--green-100); border-radius: 12px; padding: 12px 14px;
+    font-size: 14px; color: var(--green-900); display: flex;
+    justify-content: space-between; align-items: center; gap: 10px;
+  }
+
+  .cards { display: grid; gap: 12px; }
+  .card {
+    background: #fff; border: 1.5px solid var(--line); border-radius: 14px;
+    padding: 14px 16px; cursor: pointer; text-align: left; width: 100%;
+  }
+  .card:hover { border-color: var(--green-500); }
+  .card-top { display: flex; align-items: center; gap: 10px; }
+  .emoji { font-size: 30px; }
+  .card h3 { margin: 0; font-size: 17px; }
+  .badge {
+    margin-left: auto; font-size: 12px; font-weight: 700; padding: 4px 10px;
+    border-radius: 999px; white-space: nowrap;
+  }
+  .badge.ok { background: var(--green-100); color: var(--green-700); }
+  .badge.almost { background: #fdf0dd; color: var(--warn); }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 6px; }
+  .missing { color: var(--warn); font-size: 13px; margin-top: 4px; }
+  .empty {
+    text-align: center; color: var(--muted); padding: 30px 10px;
+    background: #fff; border: 1.5px dashed var(--line); border-radius: 14px;
+  }
+
+  .overlay {
+    position: fixed; inset: 0; background: rgba(20, 35, 27, .55);
+    display: none; align-items: flex-end; justify-content: center; z-index: 10;
+  }
+  .overlay.show { display: flex; }
+  .modal {
+    background: #fff; width: 100%; max-width: 640px; max-height: 88vh;
+    overflow-y: auto; border-radius: 20px 20px 0 0; padding: 22px 20px 30px;
+  }
+  .modal h2 { font-size: 22px; margin-bottom: 4px; }
+  .modal h4 { margin: 18px 0 8px; color: var(--green-700); }
+  .ing-list { list-style: none; padding: 0; margin: 0; }
+  .ing-list li { padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .ing-list .have::before { content: "✅ "; }
+  .ing-list .lack::before { content: "🛒 "; }
+  .ing-list .lack { color: var(--warn); }
+  .steps { padding-left: 20px; margin: 0; }
+  .steps li { margin-bottom: 10px; font-size: 15px; }
+  .close { float: right; background: none; border: none; font-size: 26px; color: var(--muted); }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }
+
+  @media (min-width: 640px) {
+    .overlay { align-items: center; }
+    .modal { border-radius: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🥬 냉파</h1>
+  <p>있는 재료만 넣으면, 오늘의 요리가 나와요</p>
+</header>
+
+<main>
+  <section>
+    <h2>1. 냉장고에 뭐가 있나요?</h2>
+    <p class="hint">아래에서 눌러 고르거나, 직접 입력해서 추가하세요. (소금·설탕·간장·식용유·후추는 기본으로 있다고 가정해요)</p>
+    <div class="add-row">
+      <input id="ingInput" type="text" placeholder="예: 대파" autocomplete="off">
+      <button class="btn" id="addBtn">추가</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <section>
+    <div class="selected-box">
+      <span id="selectedText">아직 고른 재료가 없어요</span>
+      <button class="btn ghost" id="clearBtn">모두 지우기</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 이런 요리를 할 수 있어요</h2>
+    <div class="cards" id="results"></div>
+  </section>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<footer>냉파 v0.1 · 냉장고 속 재료로 오늘 뭐 먹지? 해결!</footer>
+
+<script>
+// ============================================================
+// 1) 레시피 데이터 — 여기에 요리를 추가하면 앱에 바로 반영됩니다.
+//    ings: 필요한 재료 (기본 양념은 적지 않아도 됩니다)
+// ============================================================
+const RECIPES = [
+  { name: "계란볶음밥", emoji: "🍳", time: 10, ings: ["밥", "계란", "대파"],
+    steps: ["대파를 잘게 썰어 기름 두른 팬에 볶아 파기름을 내요.", "계란을 풀어 넣고 스크램블처럼 휘저어요.", "밥을 넣고 고슬고슬하게 볶아요.", "간장 한 큰술과 후추, 소금으로 간을 맞추면 완성!"] },
+  { name: "김치볶음밥", emoji: "🍚", time: 15, ings: ["밥", "김치", "계란", "대파"],
+    steps: ["김치를 잘게 썰고 대파도 송송 썰어요.", "기름 두른 팬에 대파와 김치를 볶아요.", "밥을 넣고 김치 국물 약간과 함께 볶아요.", "접시에 담고 계란 프라이를 올려요."] },
+  { name: "계란말이", emoji: "🥚", time: 15, ings: ["계란", "대파", "당근"],
+    steps: ["대파와 당근을 아주 잘게 다져요.", "계란을 풀고 다진 채소, 소금 한 꼬집을 섞어요.", "약불에 기름을 얇게 두르고 계란물을 조금 부어요.", "반쯤 익으면 돌돌 말고, 이 과정을 반복해요.", "한 김 식힌 뒤 먹기 좋게 썰어요."] },
+  { name: "계란찜", emoji: "🥣", time: 15, ings: ["계란", "대파"],
+    steps: ["계란 3개를 풀고 물을 계란의 절반 정도 넣어요.", "소금으로 간하고 송송 썬 대파를 넣어요.", "뚝배기나 내열 그릇에 담아 약불에서 저어가며 익혀요.", "몽글몽글해지면 뚜껑을 덮고 2~3분 더 익혀요."] },
+  { name: "김치찌개", emoji: "🍲", time: 30, ings: ["김치", "돼지고기", "두부", "대파", "양파"],
+    steps: ["냄비에 기름을 두르고 돼지고기와 김치를 먼저 볶아요.", "물을 붓고 끓여요.", "양파를 넣고 15분 정도 푹 끓여요.", "두부와 대파를 넣고 5분 더 끓이면 완성!"] },
+  { name: "된장찌개", emoji: "🥘", time: 25, ings: ["된장", "두부", "애호박", "양파", "대파"],
+    steps: ["물에 된장 두 큰술을 풀어 끓여요.", "양파와 애호박을 깍둑 썰어 넣어요.", "채소가 익으면 두부를 넣어요.", "대파를 넣고 한 번 더 끓여 마무리해요."] },
+  { name: "두부조림", emoji: "🧈", time: 20, ings: ["두부", "대파", "고춧가루"],
+    steps: ["두부를 도톰하게 썰어 기름에 앞뒤로 노릇하게 구워요.", "간장 3, 고춧가루 1, 물 5 큰술을 섞어 양념장을 만들어요.", "다진 대파를 양념장에 넣어요.", "구운 두부 위에 양념장을 올려 약불에서 졸여요."] },
+  { name: "감자채볶음", emoji: "🥔", time: 15, ings: ["감자", "당근", "양파"],
+    steps: ["감자, 당근, 양파를 채 썰어요. 감자는 물에 헹궈 전분을 빼요.", "기름 두른 팬에 양파를 먼저 볶아요.", "감자와 당근을 넣고 투명해질 때까지 볶아요.", "소금과 후추로 간하면 완성!"] },
+  { name: "참치마요덮밥", emoji: "🐟", time: 10, ings: ["참치캔", "밥", "마요네즈", "계란"],
+    steps: ["참치캔의 기름을 빼고 마요네즈, 후추와 섞어요.", "따뜻한 밥 위에 참치마요를 올려요.", "계란 프라이를 얹어요.", "간장을 살짝 둘러 비벼 먹어요."] },
+  { name: "라면 (계란 대파)", emoji: "🍜", time: 8, ings: ["라면", "계란", "대파"],
+    steps: ["물이 끓으면 면과 스프를 넣어요.", "대파를 송송 썰어 넣어요.", "면이 익어갈 때 계란을 넣어요.", "취향대로 계란을 익히고 불을 꺼요."] },
+  { name: "토마토계란볶음", emoji: "🍅", time: 15, ings: ["토마토", "계란", "대파"],
+    steps: ["계란을 풀어 소금을 약간 넣고 스크램블로 익혀 덜어둬요.", "대파를 볶아 향을 낸 뒤 토마토를 넣어요.", "토마토가 물러지면 설탕 한 꼬집과 소금으로 간해요.", "덜어둔 계란을 다시 넣고 섞어요."] },
+  { name: "어묵볶음", emoji: "🍢", time: 15, ings: ["어묵", "양파", "당근"],
+    steps: ["어묵, 양파, 당근을 먹기 좋게 썰어요.", "양파와 당근을 먼저 볶아요.", "어묵을 넣고 같이 볶아요.", "간장 2, 설탕 1 큰술로 간하고 마무리해요."] },
+  { name: "제육볶음", emoji: "🥩", time: 25, ings: ["돼지고기", "양파", "대파", "고추장"],
+    steps: ["고추장 2, 간장 1, 설탕 1, 후추를 섞어 양념장을 만들어요.", "돼지고기에 양념장을 버무려 10분 재워요.", "양파와 대파를 썰어요.", "센 불에 고기를 볶다가 채소를 넣고 함께 볶아요."] },
+  { name: "시금치나물", emoji: "🥬", time: 15, ings: ["시금치", "마늘"],
+    steps: ["끓는 물에 소금을 넣고 시금치를 30초만 데쳐요.", "찬물에 헹궈 물기를 꼭 짜요.", "다진 마늘, 소금, 간장 약간을 넣고 무쳐요.", "참기름이 있다면 한 방울 넣어요."] }
+];
+
+const COMMON = ["계란", "밥", "대파", "양파", "당근", "감자", "김치", "두부", "돼지고기", "애호박",
+                "된장", "참치캔", "마요네즈", "라면", "토마토", "어묵", "고추장", "고춧가루", "시금치", "마늘"];
+
+// ============================================================
+// 2) 앱 동작
+// ============================================================
+let have = new Set();
+try { have = new Set(JSON.parse(localStorage.getItem("naengpa") || "[]")); } catch (e) {}
+
+const $ = (id) => document.getElementById(id);
+
+function save() {
+  try { localStorage.setItem("naengpa", JSON.stringify([...have])); } catch (e) {}
+}
+
+function allChips() {
+  // 기본 목록 + 사용자가 직접 추가한 재료
+  const extra = [...have].filter((x) => !COMMON.includes(x));
+  return [...COMMON, ...extra];
+}
+
+function toggle(name) {
+  have.has(name) ? have.delete(name) : have.add(name);
+  save();
+  render();
+}
+
+function renderChips() {
+  $("chips").innerHTML = "";
+  allChips().forEach((name) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (have.has(name) ? " on" : "");
+    b.textContent = name;
+    b.onclick = () => toggle(name);
+    $("chips").appendChild(b);
+  });
+  $("selectedText").textContent = have.size
+    ? `고른 재료 ${have.size}개: ${[...have].join(", ")}`
+    : "아직 고른 재료가 없어요";
+}
+
+function score(recipe) {
+  const missing = recipe.ings.filter((i) => !have.has(i));
+  const matched = recipe.ings.length - missing.length;
+  return { missing, matched, ratio: matched / recipe.ings.length };
+}
+
+function renderResults() {
+  const box = $("results");
+  box.innerHTML = "";
+  if (have.size === 0) {
+    box.innerHTML = '<div class="empty">재료를 고르면 만들 수 있는 요리가 여기에 나타나요 👆</div>';
+    return;
+  }
+  const list = RECIPES.map((r) => ({ r, s: score(r) }))
+    .filter((x) => x.s.matched > 0 && x.s.missing.length <= 2)
+    .sort((a, b) => a.s.missing.length - b.s.missing.length || b.s.ratio - a.s.ratio);
+
+  if (list.length === 0) {
+    box.innerHTML = '<div class="empty">아직 딱 맞는 요리를 못 찾았어요. 재료를 더 추가해 보세요!</div>';
+    return;
+  }
+  list.forEach(({ r, s }) => {
+    const card = document.createElement("button");
+    card.className = "card";
+    const ok = s.missing.length === 0;
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="emoji">${r.emoji}</span>
+        <h3>${r.name}</h3>
+        <span class="badge ${ok ? "ok" : "almost"}">${ok ? "바로 가능!" : s.missing.length + "개 부족"}</span>
+      </div>
+      <div class="meta">⏱ ${r.time}분 · 재료 ${s.matched}/${r.ings.length} 보유</div>
+      ${ok ? "" : `<div class="missing">부족한 재료: ${s.missing.join(", ")}</div>`}`;
+    card.onclick = () => openModal(r);
+    box.appendChild(card);
+  });
+}
+
+function openModal(r) {
+  $("modal").innerHTML = `
+    <button class="close" onclick="closeModal()" aria-label="닫기">×</button>
+    <h2>${r.emoji} ${r.name}</h2>
+    <div class="meta">⏱ 약 ${r.time}분</div>
+    <h4>재료</h4>
+    <ul class="ing-list">
+      ${r.ings.map((i) => `<li class="${have.has(i) ? "have" : "lack"}">${i}${have.has(i) ? "" : " (없음)"}</li>`).join("")}
+    </ul>
+    <h4>만드는 순서</h4>
+    <ol class="steps">${r.steps.map((s) => `<li>${s}</li>`).join("")}</ol>`;
+  $("overlay").classList.add("show");
+}
+function closeModal() { $("overlay").classList.remove("show"); }
+$("overlay").onclick = (e) => { if (e.target.id === "overlay") closeModal(); };
+
+function addFromInput() {
+  const v = $("ingInput").value.trim();
+  if (!v) return;
+  have.add(v);
+  $("ingInput").value = "";
+  save();
+  render();
+}
+$("addBtn").onclick = addFromInput;
+$("ingInput").addEventListener("keydown", (e) => { if (e.key === "Enter") addFromInput(); });
+$("clearBtn").onclick = () => { have.clear(); save(); render(); };
+
+function render() { renderChips(); renderResults(); }
+render();
+</script>
+</body>
+</html>
